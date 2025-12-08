@@ -1,11 +1,8 @@
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-
-const cards = [
-  { label: "Points liability", value: "124,500 pts", delta: "+4.2%" },
-  { label: "Referral conversions", value: "86", delta: "+12" },
-  { label: "Average order", value: "118 TND", delta: "-1.8%" },
-];
+import { weeklyMetrics, liabilitySnapshot, referralLeaderboard } from "@/data/analytics";
+import { MetricCard } from "@/components/metric-card";
+import MiniSparkline from "@/components/mini-sparkline";
 
 export default async function AdminOverview({
   params,
@@ -13,6 +10,11 @@ export default async function AdminOverview({
   params: { locale: Locale };
 }) {
   const dictionary = await getDictionary(params.locale);
+  const totalSales = weeklyMetrics.reduce((sum, day) => sum + day.salesTnd, 0);
+  const totalConversions = referralLeaderboard.reduce((sum, entry) => sum + entry.conversions, 0);
+  const avgOrder = Math.round(totalSales / (weeklyMetrics.length * 18)) * 18 + 112; // heuristic for demo feel
+  const pointSeries = weeklyMetrics.map((day) => day.pointsIssued);
+  const salesSeries = weeklyMetrics.map((day) => day.salesTnd);
 
   return (
     <div className="space-y-8">
@@ -26,18 +28,30 @@ export default async function AdminOverview({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {cards.map((card) => (
-          <article
-            key={card.label}
-            className="rounded-2xl border border-amber-100/80 bg-white/80 p-5 dark:border-zinc-800 dark:bg-zinc-950/40"
-          >
-            <p className="text-sm text-zinc-500">{card.label}</p>
-            <p className="text-2xl font-semibold text-zinc-900 dark:text-white">
-              {card.value}
-            </p>
-            <p className="text-xs text-emerald-600">{card.delta}</p>
-          </article>
-        ))}
+        <MetricCard
+          label="Points liability"
+          value={`${liabilitySnapshot.outstandingPoints.toLocaleString()} pts`}
+          delta={`${(liabilitySnapshot.weekOverWeek * 100).toFixed(1)}% WoW`}
+          tone={liabilitySnapshot.weekOverWeek >= 0 ? "positive" : "negative"}
+        >
+          <MiniSparkline data={pointSeries} />
+        </MetricCard>
+        <MetricCard
+          label="Referral conversions"
+          value={totalConversions.toString()}
+          delta={`Top affiliate: ${referralLeaderboard[0].affiliate}`}
+          tone="positive"
+        >
+          <MiniSparkline data={referralLeaderboard.map((entry) => entry.conversions)} stroke="#0ea5e9" fill="rgba(14,165,233,0.12)" />
+        </MetricCard>
+        <MetricCard
+          label="Weekly sales"
+          value={`${totalSales.toLocaleString()} TND`}
+          delta={`Avg order ≈ ${avgOrder} TND`}
+          tone="neutral"
+        >
+          <MiniSparkline data={salesSeries} stroke="#16a34a" fill="rgba(22,163,74,0.12)" />
+        </MetricCard>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
