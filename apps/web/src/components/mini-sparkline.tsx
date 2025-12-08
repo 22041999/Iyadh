@@ -25,7 +25,13 @@ export default function MiniSparkline({ data, stroke = "#f97316", fill = "rgba(2
   const areaPath = `${points} ${width},${height} 0,${height}`;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-12 w-40 text-amber-500">
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="h-12 w-40 text-amber-500"
+      role="img"
+      aria-hidden="true"
+      focusable="false"
+    >
       <polyline points={areaPath} fill={fill} stroke="none" />
       <polyline points={points} fill="none" stroke={stroke} strokeWidth={2} strokeLinecap="round" />
     </svg>

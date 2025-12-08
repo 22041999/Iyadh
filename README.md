@@ -37,8 +37,9 @@ Multilingual commerce experience for Tunisian bio-products powered by a dynamic 
 Location: `supabase/functions/rule-engine`
 
 - `engine.ts`: Pure evaluator with expr-eval parser, condition filtering, target resolution (customer/referrer/referee/manual) and discount/PT calculations.
-- `index.ts`: HTTP interface for `preview` or `execute` modes. Loads latest active rule set, normalizes JSON → `RuleSet`, evaluates, optionally persists ledger rows + event log.
-- `engine.test.ts`: Deno tests validating purchase + referral scenarios (TDD entry point). Run via `deno test supabase/functions/rule-engine/engine.test.ts`.
+- `schema.ts`: Zod-powered parser that validates admin-authored JSON, merges camel/snake fields, and rejects rules that lack expressions/conditions.
+- `index.ts`: HTTP interface for `preview` or `execute` modes. Loads the cached active rule set (refresh TTL via `RULE_ENGINE_CACHE_TTL_MS`), evaluates, optionally persists ledger rows + event log.
+- `engine.test.ts` & `schema.test.ts`: Deno tests validating purchase/referral scenarios plus schema parsing guarantees.
 
 ### Request Contract
 
@@ -61,7 +62,7 @@ Responses contain ledger instructions + discount adjustments. When `mode = execu
   - `app/layout.tsx`: root font/theme wrapper.
   - `app/[locale]/layout.tsx`: sets `dir` + background per locale.
   - `app/[locale]/(site)` + `app/[locale]/admin` layouts supply navigation bars for customer and admin experiences.
-- **Pages** highlight hero content, referral messaging, admin dashboards, rules studio, and analytics placeholders wired to translations.
+- **Pages** highlight hero content, referral messaging, the live reward preview simulator (calls the Supabase Edge Function via server actions), and admin dashboards with sparkline analytics + referral leaderboards fed by typed sample data (`src/data/analytics.ts`).
 - **Translations**: `src/i18n/config.ts` + `dictionaries.ts` provide typed dictionaries for Arabic (RTL), French, English.
 
 ## Development
@@ -70,18 +71,25 @@ Responses contain ledger instructions + discount adjustments. When `mode = execu
 # Frontend
 cd apps/web
 npm install
-npm run lint            # ESLint + TypeScript
-npm run dev             # Start Next.js (requires NODE_ENV vars for Supabase when integrating APIs)
+npm run lint            # ESLint + TypeScript checks
+npm run test            # Vitest + Testing Library (component coverage)
+npm run dev             # Start Next.js (requires Supabase env vars for server actions)
 
-# Rule Engine Tests
-deno test supabase/functions/rule-engine/engine.test.ts
+# Rule engine (Deno)
+cd /workspace
+deno test supabase/functions/rule-engine
 ```
+
+### Required Environment Variables (local dev)
+
+- `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (server actions & Edge Function invocation)
+- `RULE_ENGINE_CACHE_TTL_MS` (optional, defaults to 60s on Edge Function)
 
 > ⚠️ `next@15.0.3` currently carries a published CVE warning upstream. Upgrade to the patched release when it becomes available while keeping the App Router API stable.
 
 ## Next Steps
 
-1. **Connect Supabase client** inside Next.js server actions (checkout, loyalty preview).
-2. **Edge Function hardening**: caching active rules, adding schema validation (e.g., Zod) and dry-run endpoints for the admin UI.
-3. **Analytics**: Build Tremor/Recharts components that read from `metrics_daily` and `event_log` views.
-4. **CI/CD**: add GitHub workflow running `npm run lint`, Deno tests, and Supabase migrations.
+1. **Hook production Supabase data** into the analytics dashboard (replace sample data with `metrics_daily` views).
+2. **Expand TDD**: add integration tests for server actions + Supabase mocks, and extend Vitest coverage to reward preview flows.
+3. **Operationalize CI/CD**: run `npm run lint`, `npm run test`, and `deno test supabase/functions/rule-engine` in GitHub Actions before deploying migrations/Edge Functions.
