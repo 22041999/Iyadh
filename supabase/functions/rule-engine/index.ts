@@ -4,18 +4,14 @@ import {
   EngineEvent,
   EngineResult,
   RuleSet,
-  BusinessRule,
-  ConditionGroup,
-  EngineEventType,
-  RuleTarget,
-  AwardType,
-  ValueType,
   evaluateRules,
 } from "./engine.ts";
+import { parseRuleSetDefinition } from "./schema.ts";
 
 interface EngineRequest {
   event: EngineEvent;
   mode?: "preview" | "execute";
+  refreshRules?: boolean;
 }
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -32,6 +28,16 @@ const supabase = createClient(supabaseUrl, serviceKey, {
     detectSessionInUrl: false,
   },
 });
+
+const CACHE_TTL_MS = Number(Deno.env.get("RULE_ENGINE_CACHE_TTL_MS") ?? 60_000);
+const DEFAULT_RULE_SET: RuleSet = {
+  pointValue: { tndPerPoint: 0.1 },
+  earnRules: [],
+  referralRules: [],
+  redemptionRules: [],
+};
+
+let cachedRuleSet: { value: RuleSet; expiresAt: number } | null = null;
 
 serve(async (req) => {
   if (req.method !== "POST") {
@@ -52,8 +58,11 @@ serve(async (req) => {
     return jsonResponse({ error: "Invalid event payload" }, 400);
   }
 
+  const forceRefresh =
+    body.refreshRules === true || req.headers.get("x-refresh-rules") === "true";
+
   try {
-    const ruleSet = await loadActiveRuleSet();
+    const ruleSet = await loadActiveRuleSet(forceRefresh);
     const evaluation = evaluateRules(ruleSet, body.event);
 
     if (body.mode === "execute") {
@@ -77,7 +86,15 @@ function jsonResponse(payload: unknown, status = 200): Response {
   });
 }
 
-async function loadActiveRuleSet(): Promise<RuleSet> {
+async function loadActiveRuleSet(forceRefresh = false): Promise<RuleSet> {
+  if (!forceRefresh && cachedRuleSet && cachedRuleSet.expiresAt > Date.now()) {
+    return cachedRuleSet.value;
+  }
+
+  if (forceRefresh) {
+    invalidateRuleCache();
+  }
+
   const { data, error } = await supabase
     .from("business_rules")
     .select("definition")
@@ -90,63 +107,29 @@ async function loadActiveRuleSet(): Promise<RuleSet> {
     throw error;
   }
 
-  if (!data?.definition) {
-    return {
-      pointValue: { tndPerPoint: 0.1 },
-      earnRules: [],
-      referralRules: [],
-      redemptionRules: [],
-    };
-  }
+  const ruleSet = data?.definition
+    ? parseRuleSetDefinition(data.definition)
+    : fallbackRuleSet();
 
-  return normalizeRuleSet(data.definition);
+  cachedRuleSet = {
+    value: ruleSet,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  };
+
+  return ruleSet;
 }
 
-function normalizeRuleSet(definition: Record<string, unknown>): RuleSet {
-  const pointValueRaw = definition["point_value"] as Record<string, unknown> | undefined;
-  const earnRulesRaw = definition["earn_rules"] as Record<string, unknown>[] | undefined;
-  const referralRulesRaw = definition["referral_rules"] as Record<string, unknown>[] | undefined;
-  const redemptionRulesRaw = definition["redemption_rules"] as Record<string, unknown>[] | undefined;
-
+function fallbackRuleSet(): RuleSet {
   return {
-    pointValue: {
-      tndPerPoint: Number(pointValueRaw?.["tnd_per_point"] ?? 0.1),
-    },
-    earnRules: (earnRulesRaw ?? []).map(normalizeRule),
-    referralRules: (referralRulesRaw ?? []).map(normalizeRule),
-    redemptionRules: (redemptionRulesRaw ?? []).map(normalizeRule),
+    pointValue: { ...DEFAULT_RULE_SET.pointValue },
+    earnRules: [],
+    referralRules: [],
+    redemptionRules: [],
   };
 }
 
-function normalizeRule(rule: Record<string, unknown>): BusinessRule {
-  const expression =
-    (rule["expression"] as string | undefined) ??
-    (rule["calculation"] as string | undefined) ??
-    "0";
-  const target = (rule["target"] as string | undefined) ?? "customer";
-  const awardType = (rule["award_type"] as string | undefined) ?? "points";
-  const valueType = (rule["value_type"] as string | undefined) ?? "points";
-
-  return {
-    id: (rule["id"] as string | undefined) ?? crypto.randomUUID(),
-    event: (rule["event"] as EngineEventType | undefined) ?? "purchase.completed",
-    label: (rule["label"] as string | undefined) ?? "Rule",
-    expression,
-    priority: Number(rule["priority"] ?? 1),
-    target: target as RuleTarget,
-    awardType: awardType as AwardType,
-    valueType: valueType as ValueType,
-    conditions: normalizeConditions(rule["conditions"] as ConditionGroup | undefined),
-    metadata: (rule["metadata"] as Record<string, unknown> | undefined) ?? {},
-  };
-}
-
-function normalizeConditions(group?: ConditionGroup): ConditionGroup | undefined {
-  if (!group) return undefined;
-  return {
-    all: group.all,
-    any: group.any,
-  };
+function invalidateRuleCache() {
+  cachedRuleSet = null;
 }
 
 async function persistResult(result: EngineResult, event: EngineEvent) {

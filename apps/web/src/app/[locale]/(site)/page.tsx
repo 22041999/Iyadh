@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
+import { previewRewards } from "@/actions/reward-preview";
+import RewardPreviewCard from "@/components/reward-preview-card";
 
 export default async function SiteHome({
   params,
@@ -53,6 +55,14 @@ export default async function SiteHome({
           </div>
         </div>
       </section>
+
+      <RewardPreviewCard
+        action={previewRewards}
+        title={dictionary.hero.previewTitle}
+        description={dictionary.hero.previewDescription}
+        inputLabel={dictionary.hero.previewInputLabel}
+        submitLabel={dictionary.hero.previewSubmit}
+      />
 
       <section className="grid gap-6 md:grid-cols-3">
         {[dictionary.highlights.referral, dictionary.highlights.loyalty, dictionary.highlights.analytics].map(

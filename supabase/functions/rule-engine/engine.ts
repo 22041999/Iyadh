@@ -10,7 +10,7 @@ export interface EngineEvent<TPayload extends Record<string, unknown> = Record<s
 export interface Condition {
   field: string;
   operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "includes";
-  value: unknown;
+  value?: unknown;
 }
 
 export interface ConditionGroup {

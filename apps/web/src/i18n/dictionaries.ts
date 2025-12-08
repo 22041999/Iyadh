@@ -6,6 +6,10 @@ export type Messages = {
     subtitle: string;
     primaryCta: string;
     secondaryCta: string;
+    previewTitle: string;
+    previewDescription: string;
+    previewInputLabel: string;
+    previewSubmit: string;
   };
   highlights: {
     referral: string;
@@ -33,6 +37,10 @@ const dictionaries: Record<Locale, Messages> = {
         "Vendez miel, huile d'olive et cosmétiques bio avec un moteur de règles en temps réel pour les points, remises et parrainages.",
       primaryCta: "Découvrir les produits",
       secondaryCta: "Voir le tableau de bord",
+      previewTitle: "Simulation instantanée",
+      previewDescription: "Entrez un panier pour estimer les points attribués avec les règles actives.",
+      previewInputLabel: "Montant de la commande",
+      previewSubmit: "Calculer mes points",
     },
     highlights: {
       referral:
@@ -62,6 +70,10 @@ const dictionaries: Record<Locale, Messages> = {
         "Offer honey, olive oil, and skincare with a runtime rule engine deciding points, discounts, and referral boosts.",
       primaryCta: "Browse catalog",
       secondaryCta: "Open dashboard",
+      previewTitle: "Instant preview",
+      previewDescription: "Estimate loyalty points for the current campaign before checkout.",
+      previewInputLabel: "Order amount",
+      previewSubmit: "Preview rewards",
     },
     highlights: {
       referral:
@@ -91,6 +103,10 @@ const dictionaries: Record<Locale, Messages> = {
         "قدّم العسل وزيت الزيتون ومستحضرات التجميل مع محرّك قواعد لحظي يحدد النقاط والخصومات ومكافآت الإحالة.",
       primaryCta: "استكشف المتجر",
       secondaryCta: "لوحة التحكم",
+      previewTitle: "محاكاة فورية",
+      previewDescription: "أدخل قيمة السلة لمعرفة النقاط المتوقعة حسب القواعد الحالية.",
+      previewInputLabel: "قيمة الطلب",
+      previewSubmit: "احسب النقاط",
     },
     highlights: {
       referral:
