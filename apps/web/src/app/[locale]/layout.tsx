@@ -6,14 +6,14 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export default function LocaleLayout({
-  children,
-  params,
-}: {
+type LocaleLayoutProps = {
   children: ReactNode;
-  params: { locale: string };
-}) {
-  const locale = normalizeLocale(params.locale) as Locale;
+  params: Promise<{ locale: string }>;
+};
+
+export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
+  const resolvedParams = await params;
+  const locale = normalizeLocale(resolvedParams.locale) as Locale;
   const direction = isRtlLocale(locale) ? "rtl" : "ltr";
 
   return (

@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MetricCard } from "@/components/metric-card";
 import MiniSparkline from "@/components/mini-sparkline";
