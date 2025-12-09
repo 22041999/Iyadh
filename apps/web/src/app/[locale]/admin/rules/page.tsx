@@ -14,12 +14,15 @@ const rulePresets = [
   },
 ];
 
-export default async function RulesStudio({
-  params,
-}: {
-  params: { locale: Locale };
-}) {
-  const dictionary = await getDictionary(params.locale);
+type RulesStudioProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function RulesStudio({ params }: RulesStudioProps) {
+  const resolvedParams = await params;
+  const dictionary = await getDictionary(resolvedParams.locale);
 
   return (
     <div className="space-y-8">

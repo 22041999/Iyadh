@@ -12,6 +12,9 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  esbuild: {
+    jsx: "automatic",
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
