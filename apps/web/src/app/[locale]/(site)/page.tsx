@@ -4,19 +4,20 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { previewRewards } from "@/actions/reward-preview";
 import RewardPreviewCard from "@/components/reward-preview-card";
 
-export default async function SiteHome({
-  params,
-}: {
-  params: { locale: Locale };
-}) {
-  const dictionary = await getDictionary(params.locale);
+type SitePageProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export default async function SiteHome({ params }: SitePageProps) {
+  const resolvedParams = await params;
+  const dictionary = await getDictionary(resolvedParams.locale);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16">
       <section className="grid gap-8 rounded-3xl bg-white/90 p-10 shadow-lg shadow-amber-100 dark:bg-zinc-900/60 dark:shadow-none lg:grid-cols-2">
         <div className="space-y-6">
           <p className="text-sm uppercase tracking-[0.3em] text-amber-600">
-            {params.locale === "ar" ? "منتجات بيولوجية" : "Bio products"}
+            {resolvedParams.locale === "ar" ? "منتجات بيولوجية" : "Bio products"}
           </p>
           <h1 className="text-4xl font-semibold leading-tight text-zinc-900 dark:text-zinc-50">
             {dictionary.hero.title}
@@ -26,13 +27,13 @@ export default async function SiteHome({
           </p>
           <div className="flex flex-col gap-4 sm:flex-row">
             <Link
-              href={`/${params.locale}/catalog`}
+              href={`/${resolvedParams.locale}/catalog`}
               className="inline-flex items-center justify-center rounded-full bg-amber-600 px-6 py-3 text-base font-semibold text-white shadow-sm shadow-amber-300/50 transition hover:bg-amber-500"
             >
               {dictionary.hero.primaryCta}
             </Link>
             <Link
-              href={`/${params.locale}/dashboard`}
+              href={`/${resolvedParams.locale}/dashboard`}
               className="inline-flex items-center justify-center rounded-full border border-amber-200 px-6 py-3 text-base font-semibold text-amber-700 transition hover:border-amber-400 hover:text-amber-900"
             >
               {dictionary.hero.secondaryCta}
@@ -82,7 +83,7 @@ export default async function SiteHome({
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-3">
             <p className="text-sm uppercase tracking-[0.4em] text-amber-600">
-              {params.locale === "ar" ? "نظام ولاء" : "Rule engine"}
+              {resolvedParams.locale === "ar" ? "نظام ولاء" : "Rule engine"}
             </p>
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
               {dictionary.admin.title}
@@ -93,13 +94,13 @@ export default async function SiteHome({
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
-              href={`/${params.locale}/admin/rules`}
+              href={`/${resolvedParams.locale}/admin/rules`}
               className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-amber-700 shadow-sm shadow-amber-200 transition hover:text-amber-900 dark:bg-zinc-800 dark:text-amber-200"
             >
               {dictionary.admin.rulesCta}
             </Link>
             <Link
-              href={`/${params.locale}/admin/analytics`}
+              href={`/${resolvedParams.locale}/admin/analytics`}
               className="inline-flex items-center justify-center rounded-full border border-transparent bg-amber-700 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-amber-600"
             >
               {dictionary.admin.analyticsCta}

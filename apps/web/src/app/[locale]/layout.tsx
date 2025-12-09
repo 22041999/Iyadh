@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
-import { locales, type Locale, normalizeLocale, isRtlLocale } from "@/i18n/config";
+import { type Locale, normalizeLocale, isRtlLocale } from "@/i18n/config";
 import "../globals.css";
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
+export const dynamic = "force-dynamic";
 
 type LocaleLayoutProps = {
   children: ReactNode;

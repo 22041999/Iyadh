@@ -4,12 +4,15 @@ import { weeklyMetrics, liabilitySnapshot, referralLeaderboard } from "@/data/an
 import { MetricCard } from "@/components/metric-card";
 import MiniSparkline from "@/components/mini-sparkline";
 
-export default async function AdminOverview({
-  params,
-}: {
-  params: { locale: Locale };
-}) {
-  const dictionary = await getDictionary(params.locale);
+type AdminOverviewProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminOverview({ params }: AdminOverviewProps) {
+  const resolvedParams = await params;
+  const dictionary = await getDictionary(resolvedParams.locale);
   const totalSales = weeklyMetrics.reduce((sum, day) => sum + day.salesTnd, 0);
   const totalConversions = referralLeaderboard.reduce((sum, entry) => sum + entry.conversions, 0);
   const avgOrder = Math.round(totalSales / (weeklyMetrics.length * 18)) * 18 + 112; // heuristic for demo feel

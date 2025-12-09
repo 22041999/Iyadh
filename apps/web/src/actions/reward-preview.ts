@@ -54,5 +54,3 @@ export async function previewRewards(
     };
   }
 }
-
-export { initialState as rewardPreviewInitialState };

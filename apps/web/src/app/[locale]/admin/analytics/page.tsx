@@ -8,12 +8,15 @@ import {
 import { MetricCard } from "@/components/metric-card";
 import MiniSparkline from "@/components/mini-sparkline";
 
-export default async function AnalyticsPage({
-  params,
-}: {
-  params: { locale: Locale };
-}) {
-  const dictionary = await getDictionary(params.locale);
+type AnalyticsPageProps = {
+  params: Promise<{ locale: Locale }>;
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
+  const resolvedParams = await params;
+  const dictionary = await getDictionary(resolvedParams.locale);
   const issuedSeries = weeklyMetrics.map((point) => point.pointsIssued);
   const redeemedSeries = weeklyMetrics.map((point) => point.pointsRedeemed);
   const bestDay = weeklyMetrics.reduce((top, point) =>
