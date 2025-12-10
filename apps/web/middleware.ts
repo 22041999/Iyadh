@@ -20,9 +20,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const locale = request.cookies.get("locale")?.value ?? defaultLocale;
+  const cookieLocale = request.cookies.get("locale")?.value;
+  const safeLocale = locales.includes(cookieLocale as (typeof locales)[number])
+    ? cookieLocale!
+    : defaultLocale;
 
-  return NextResponse.redirect(new URL(`/${locale}${pathname}`, request.url));
+  const response = NextResponse.redirect(new URL(`/${safeLocale}${pathname}`, request.url));
+  if (cookieLocale !== safeLocale) {
+    response.cookies.set("locale", safeLocale, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+  }
+  return response;
 }
 
 export const config = {
